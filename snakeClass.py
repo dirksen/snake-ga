@@ -1,3 +1,6 @@
+import warnings
+warnings.simplefilter("ignore")
+
 import pygame
 from random import randint
 from DQN import DQNAgent
@@ -167,7 +170,7 @@ def plot_seaborn(array_counter, array_score):
     sns.set(color_codes=True)
     ax = sns.regplot(np.array([array_counter])[0], np.array([array_score])[0], color="b", x_jitter=.1, line_kws={'color':'green'})
     ax.set(xlabel='games', ylabel='score')
-    plt.show()
+    plt.savefig('result.png')
 
 def run():
     pygame.init()
@@ -190,35 +193,35 @@ def run():
         while not game.crash:
             #agent.epsilon is set to give randomness to actions
             agent.epsilon = 80 - counter_games
-            
+
             #get old state
             state_old = agent.get_state(game, player1, food1)
-            
+
             #perform random actions based on agent.epsilon, or choose the action
             if randint(0, 200) < agent.epsilon:
                 final_move = to_categorical(randint(0, 2), num_classes=3)
             else:
                 # predict action based on the old state
-                prediction = agent.model.predict(state_old.reshape((1,11)))
+                prediction = agent.model.predict(state_old.reshape((1,-1)))
                 final_move = to_categorical(np.argmax(prediction[0]), num_classes=3)
-                
+
             #perform new move and get new state
             player1.do_move(final_move, player1.x, player1.y, game, food1, agent)
             state_new = agent.get_state(game, player1, food1)
-            
+
             #set treward for the new state
             reward = agent.set_reward(player1, game.crash)
-            
+
             #train short memory base on the new action and state
             agent.train_short_memory(state_old, final_move, reward, state_new, game.crash)
-            
+
             # store the new data into a long term memory
             agent.remember(state_old, final_move, reward, state_new, game.crash)
             record = get_record(game.score, record)
             if display_option:
                 display(player1, food1, game, record)
                 pygame.time.wait(speed)
-        
+
         agent.replay_new(agent.memory)
         counter_games += 1
         print('Game', counter_games, '      Score:', game.score)

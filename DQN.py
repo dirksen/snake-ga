@@ -6,6 +6,9 @@ import numpy as np
 import pandas as pd
 from operator import add
 
+# dimention of the state vector
+STATE_DIM = 11
+
 
 class DQNAgent(object):
 
@@ -76,7 +79,7 @@ class DQNAgent(object):
 
     def network(self, weights=None):
         model = Sequential()
-        model.add(Dense(output_dim=120, activation='relu', input_dim=11))
+        model.add(Dense(output_dim=120, activation='relu', input_dim=STATE_DIM))
         model.add(Dropout(0.15))
         model.add(Dense(output_dim=120, activation='relu'))
         model.add(Dropout(0.15))
@@ -109,7 +112,7 @@ class DQNAgent(object):
     def train_short_memory(self, state, action, reward, next_state, done):
         target = reward
         if not done:
-            target = reward + self.gamma * np.amax(self.model.predict(next_state.reshape((1, 11)))[0])
-        target_f = self.model.predict(state.reshape((1, 11)))
+            target = reward + self.gamma * np.amax(self.model.predict(next_state.reshape((1, -1)))[0])
+        target_f = self.model.predict(state.reshape((1, -1)))
         target_f[0][np.argmax(action)] = target
-        self.model.fit(state.reshape((1, 11)), target_f, epochs=1, verbose=0)
+        self.model.fit(state.reshape((1, -1)), target_f, epochs=1, verbose=0)
