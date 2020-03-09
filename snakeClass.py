@@ -1,6 +1,7 @@
 import warnings
 warnings.simplefilter("ignore")
 
+import sys
 import pygame
 from random import randint
 from DQN import DQNAgent
@@ -10,24 +11,24 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-# Set options to activate or deactivate the game view, and its speed
-display_option = False
+TEST_MODE = True
+
 speed = 0
-pygame.font.init()
 
 
 class Game:
 
     def __init__(self, game_width, game_height):
-        pygame.display.set_caption('SnakeGen')
         self.game_width = game_width
         self.game_height = game_height
-        self.gameDisplay = pygame.display.set_mode((game_width, game_height+60))
-        self.bg = pygame.image.load("img/background.png")
         self.crash = False
         self.player = Player(self)
         self.food = Food()
         self.score = 0
+        if TEST_MODE:
+            pygame.display.set_caption('SnakeGen')
+            self.gameDisplay = pygame.display.set_mode((game_width, game_height+60))
+            self.bg = pygame.image.load("img/background.png")
 
 
 class Player(object):
@@ -91,8 +92,6 @@ class Player(object):
                 game.gameDisplay.blit(self.image, (x_temp, y_temp))
 
             update_screen()
-        else:
-            pygame.time.wait(300)
 
 
 class Food(object):
@@ -173,12 +172,17 @@ def plot_seaborn(array_counter, array_score):
     plt.savefig('result.png')
 
 def run():
-    pygame.init()
-    agent = DQNAgent()
     counter_games = 0
     score_plot = []
     counter_plot =[]
     record = 0
+    agent = DQNAgent(TEST_MODE)
+    if TEST_MODE:
+        pygame.init()
+        pygame.font.init()
+        print('Start testing the trained model ...')
+    else:
+        print('Start training ...')
     while counter_games < 150:
         # Initialize classes
         game = Game(440, 440)
@@ -187,7 +191,7 @@ def run():
 
         # Perform first move
         initialize_game(player1, game, food1, agent)
-        if display_option:
+        if TEST_MODE:
             display(player1, food1, game, record)
 
         while not game.crash:
@@ -198,7 +202,7 @@ def run():
             state_old = agent.get_state(game, player1, food1)
 
             #perform random actions based on agent.epsilon, or choose the action
-            if randint(0, 200) < agent.epsilon:
+            if randint(0, 200) < agent.epsilon and not TEST_MODE:
                 final_move = to_categorical(randint(0, 2), num_classes=3)
             else:
                 # predict action based on the old state
@@ -218,7 +222,7 @@ def run():
             # store the new data into a long term memory
             agent.remember(state_old, final_move, reward, state_new, game.crash)
             record = get_record(game.score, record)
-            if display_option:
+            if TEST_MODE:
                 display(player1, food1, game, record)
                 pygame.time.wait(speed)
 
@@ -231,4 +235,6 @@ def run():
     plot_seaborn(counter_plot, score_plot)
 
 
-run()
+if __name__ == '__main__':
+    TEST_MODE = 'test' in sys.argv
+    run()
