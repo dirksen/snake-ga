@@ -67,7 +67,7 @@ class DQNAgent(object):
             else:
                 state[i]=0
 
-        return np.asarray(state)
+        return np.asarray(state).reshape(1, -1)
 
     def set_reward(self, player, crash):
         self.reward = 0
@@ -105,15 +105,15 @@ class DQNAgent(object):
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
-                target = reward + self.gamma * np.amax(self.model.predict(np.array([next_state]))[0])
-            target_f = self.model.predict(np.array([state]))
+                target = reward + self.gamma * np.amax(self.model.predict(next_state)[0])
+            target_f = self.model.predict(state)
             target_f[0][np.argmax(action)] = target
-            self.model.fit(np.array([state]), target_f, epochs=1, verbose=0)
+            self.model.fit(state, target_f, epochs=1, verbose=0)
 
     def train_short_memory(self, state, action, reward, next_state, done):
         target = reward
         if not done:
-            target = reward + self.gamma * np.amax(self.model.predict(next_state.reshape((1, -1)))[0])
-        target_f = self.model.predict(state.reshape((1, -1)))
+            target = reward + self.gamma * np.amax(self.model.predict(next_state)[0])
+        target_f = self.model.predict(state)
         target_f[0][np.argmax(action)] = target
-        self.model.fit(state.reshape((1, -1)), target_f, epochs=1, verbose=0)
+        self.model.fit(state, target_f, epochs=1, verbose=0)

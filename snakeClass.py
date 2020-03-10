@@ -206,7 +206,7 @@ def run():
                 final_move = to_categorical(randint(0, 2), num_classes=3)
             else:
                 # predict action based on the old state
-                prediction = agent.model.predict(state_old.reshape((1,-1)))
+                prediction = agent.model.predict(state_old)
                 final_move = to_categorical(np.argmax(prediction[0]), num_classes=3)
 
             #perform new move and get new state
